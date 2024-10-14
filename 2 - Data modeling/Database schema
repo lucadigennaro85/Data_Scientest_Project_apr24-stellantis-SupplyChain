@@ -1,0 +1,46 @@
+COMPANIES:
+company_id (primary key)
+company_name
+domain
+
+REVIEWS:
+review_id (primary key)
+company_id (foreign key)
+number_of_reviews
+trustscore
+
+REVIEWSPERCENTAGE:
+percentage_id (primary key)
+company_id (foreign key)
+five_stars_percentage
+four_stars_percentage
+three_stars_percentage
+two_stars_percentage
+one_star_percentage
+
+
+SQL QUERIES:
+CREATE TABLE Companies(
+    company_id INT AUTO_INCREMENT PRIMARY KEY,
+    company_name VARCHAR(255) NOT NULL,
+    domain VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Reviews (
+    review_id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT,
+    number_of_reviews INT,
+    trustscore DECIMAL(2,1)
+    FOREIGN KEY (company_id) REFERENCES Companies(company_id)
+);
+
+CREATE TABLE ReviewsPercentages (
+    percentage_id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT,
+    five_stars_percentage INT,
+    four_stars_percentage INT,
+    three_stars_percentage INT,
+    two_stars_percentage INT,
+    one_star_percentage INT,
+    FOREIGN KEY (company_id) REFERENCES Companies(company_id)
+);

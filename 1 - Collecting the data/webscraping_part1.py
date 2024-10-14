@@ -50,4 +50,4 @@ for company in companies:
             
         if reviews_class['data-star-rating'] == 'one':
             class1_reviews_perc = reviews_class.find('p', class_='typography_body-m__xgxZ_ typography_appearance-default__AAY17 styles_cell__qnPHy styles_percentageCell__cHAnb').text
-            print("1 stars reviews percentage: ", class1_reviews_perc)
+            print("1 star reviews percentage: ", class1_reviews_perc)
