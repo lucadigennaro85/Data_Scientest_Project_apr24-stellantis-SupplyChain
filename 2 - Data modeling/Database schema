@@ -2,12 +2,13 @@ COMPANIES:
 company_id (primary key)
 company_name
 domain
+trustscore
+number_of_reviews
 
 REVIEWS:
 review_id (primary key)
 company_id (foreign key)
-number_of_reviews
-trustscore
+review
 
 REVIEWSPERCENTAGE:
 percentage_id (primary key)
@@ -23,14 +24,15 @@ SQL QUERIES:
 CREATE TABLE Companies(
     company_id INT AUTO_INCREMENT PRIMARY KEY,
     company_name VARCHAR(255) NOT NULL,
-    domain VARCHAR(255) NOT NULL
+    domain VARCHAR(255) NOT NULL,
+    trustscore: DECIMAL(2,1),
+    number_of_reviews: INT
 );
 
 CREATE TABLE Reviews (
     review_id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT,
-    number_of_reviews INT,
-    trustscore DECIMAL(2,1)
+    review: VARCHAR
     FOREIGN KEY (company_id) REFERENCES Companies(company_id)
 );
 
