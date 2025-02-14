@@ -5,16 +5,13 @@ pageNumber = 0
 url = 'https://www.trustpilot.com/review/gohenry.com'
 response = requests.get(url)
 
-# URL of the company page
 while response.status_code == 200:
     pageNumber += 1
     url = url + '?page=' + str(pageNumber)
 
-    # Send a request to the webpage
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
 
-    # Find all reviews
     reviews = soup.find_all('div', class_='styles_reviewCardInner__UZk1x')
 
     for review in reviews:

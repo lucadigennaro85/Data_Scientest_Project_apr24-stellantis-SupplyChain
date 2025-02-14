@@ -2,14 +2,11 @@ import os
 import requests
 from bs4 import BeautifulSoup
 
-# URL of the category page
 url = 'https://www.trustpilot.com/categories/atm'
 
-# Send a request to the webpage
 response = requests.get(url)
 soup = BeautifulSoup(response.text, "html.parser")
 
-# Find all company listings
 companies = soup.find_all('div', class_='styles_businessUnitMain__e_tIa')
 
 for company in companies:
