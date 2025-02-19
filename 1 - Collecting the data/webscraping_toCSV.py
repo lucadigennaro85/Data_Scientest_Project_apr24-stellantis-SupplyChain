@@ -77,3 +77,5 @@ with open('trustpilot_reviews.csv', mode='w', newline='', encoding='utf-8') as f
                 writer.writerow([name, domain, reviews, trustscore, class5_reviews_perc, class4_reviews_perc, class3_reviews_perc, class2_reviews_perc, class1_reviews_perc, stars, comment, company_response])
 
 print("Data correctly written to trustpilot_reviews.csv")
+
+#prova
