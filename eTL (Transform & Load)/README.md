@@ -10,11 +10,11 @@ I uploaded in GitHub in the eTL (Transform & Load) folder:
    into Elastic as a flat document structure
    b) suply_chain_nested_index.py: for nested index where each company is a document that has subdocuments (reviews) nested underneath it
 4.	a set of example kibana queries (KIBANA QUERIES.docx) that you may run in the kibana dashboard - let me know when you want to play a little with the queries and I will have the env. up
-a.	access kibana dashboard at: http://<IP_address>:5601
-b.	Login using the id and password from lesson 1: user id: elastic, password: datascientest
-c.	Click “Explore on my own”
-d.	Go to the hamburger menu (3 lines) upper left and scroll down and choose Dev Tools
-e.	Dismiss the “Welcome to Console”
-f.	Now you are in the env: delete the default query in the Console: click in the console CTRL A and then <Delete or Backspace>
-g.	copy / paste from the KIBANA QUERIES.docx queries into the kibana dashboard and then use the right upper corner arrow (right side of the query panel) to run the query
-8. a README.md file - with this info.
+5.	access kibana dashboard at: http://<IP_address>:5601
+6.	Login using the id and password from lesson 1: user id: elastic, password: datascientest
+7.	Click “Explore on my own”
+8.	Go to the hamburger menu (3 lines) upper left and scroll down and choose Dev Tools
+9.	Dismiss the “Welcome to Console”
+10.	Now you are in the env: delete the default query in the Console: click in the console CTRL A and then <Delete or Backspace>
+11.	copy / paste from the KIBANA QUERIES.docx queries into the kibana dashboard and then use the right upper corner arrow (right side of the query panel) to run the query
+12.	README.md file - with this info.
