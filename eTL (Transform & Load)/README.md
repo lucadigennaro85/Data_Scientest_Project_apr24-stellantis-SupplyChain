@@ -10,4 +10,4 @@ I uploaded in GitHub in the eTL (Transform & Load) folder:
    into Elastic as a flat document structure
    b) suply_chain_nested_index.py: for nested index where each company is a document that has subdocuments (reviews) nested underneath it
 3. a set of example kibana queries (KIBANA QUERIES.docx) that you may run in the kibana dashboard - let me know when you want to play a little with the queries and I will have the env. up
-4. a README.md file - with these instructions
+4. a README.md file - with this info.
