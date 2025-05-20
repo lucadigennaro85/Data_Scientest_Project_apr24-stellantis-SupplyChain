@@ -245,11 +245,11 @@ def setup_nested_index():
                         "review_id": {"type": "keyword"},
                         "Review Stars": {"type": "integer"},
                         "Review Comment": {"type": "text"},
+                        "Review Length": {"type": "integer"},
                         "Company Response": {"type": "text"},
                         "VADER Sentiment Score": {"type": "keyword"},
                         "TextBlob Sentiment Score": {"type": "keyword"},
                         "BERT Sentiment Score": {"type": "keyword"},
-                        "Review Length": {"type": "integer"}
 #                       "Reviewer Username": {"type": "keyword"},
 #                       "Review date": {"type": "date"}
                     }

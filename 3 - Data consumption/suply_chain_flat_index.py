@@ -226,7 +226,6 @@ def setup_flat_index():
     mapping = {
         "mappings": {
             "properties": {
-                "review_id": {"type": "keyword"},
                 "Company": {"type": "keyword"},
                 "Domain": {"type": "keyword"},
                 "Number of Reviews": {"type": "integer"},
@@ -237,16 +236,17 @@ def setup_flat_index():
                 "3 stars reviews percentage": {"type": "float"},
                 "2 stars reviews percentage": {"type": "float"},
                 "1 star reviews percentage": {"type": "float"},
+                "Company VADER Sentiment Score": {"type": "float"},
+                "Company TextBlob Sentiment Score": {"type": "float"},
+                "Company BERT Sentiment Score": {"type": "float"},
+                "review_id": {"type": "keyword"},
                 "Review Stars": {"type": "integer"},
                 "Review Comment": {"type": "text"},
+                "Review Length": {"type": "integer"},
                 "Company Response": {"type": "text"},
                 "VADER Sentiment Score": {"type": "keyword"},
-                "Company VADER Sentiment Score": {"type": "float"},
                 "TextBlob Sentiment Score": {"type": "keyword"},
-                "Company TextBlob Sentiment Score": {"type": "float"},
                 "BERT Sentiment Score": {"type": "keyword"},
-                "Company BERT Sentiment Score": {"type": "float"},
-                "Review Length": {"type": "integer"}
 #               "Reviewer Username": {"type": "keyword"},
 #               "Review date": {"type": "date"}
             }
