@@ -4,8 +4,26 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from elasticsearch import Elasticsearch
 
-df = pd.read_csv('trustpilot_reviews_combined.csv')
+es = Elasticsearch(
+    "https://localhost:9200",
+    ca_certs="./ca/ca.crt",
+    basic_auth=("elastic", "datascientest")
+)
+
+query = {
+    "query": {
+        "match_all": {}
+    },
+    "size": 10000
+}
+
+response = es.search(index="trustpilot_reviews_combined_flat", body=query, scroll="2m")
+hits = response['hits']['hits']
+data = [hit['_source'] for hit in hits]
+
+df = pd.DataFrame(data)
 df_unique = df.drop_duplicates(subset='Company')
 
 max_reviews = df_unique['Number of Reviews'].max()
