@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-df = pd.read_csv('eTL (Transform & Load)/trustpilot_reviews_combined.csv')
+df = pd.read_csv('trustpilot_reviews_combined.csv')
 df_unique = df.drop_duplicates(subset='Company')
 
 max_reviews = df_unique['Number of Reviews'].max()
