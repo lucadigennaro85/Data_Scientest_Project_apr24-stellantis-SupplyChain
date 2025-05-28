@@ -7,8 +7,8 @@ import plotly.graph_objects as go
 from elasticsearch import Elasticsearch
 
 es = Elasticsearch(
-    "https://localhost:9200",
-    ca_certs="./ca/ca.crt",
+    "https://63.33.209.17:9200",
+    verify_certs=False,
     basic_auth=("elastic", "datascientest")
 )
 
