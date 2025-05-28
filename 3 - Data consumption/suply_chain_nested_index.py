@@ -22,23 +22,13 @@ def compute_vader_sentiment(text):
     if not text or text.strip() == "":
         return 0  # Neutral as default for empty text
     score = vader_analyzer.polarity_scores(text)["compound"]
-    if score >= 0.05:
-        return 1
-    elif score <= -0.05:
-        return -1
-    else:
-        return 0
+    return 1 if score >= 0.05 else -1 if score <= -0.05 else 0
 
 def compute_textblob_sentiment(text):
     if not text or text.strip() == "":
         return 0  # Neutral as default for empty text
     score = TextBlob(text).sentiment.polarity
-    if score > 0.1:
-        return 1
-    elif score < -0.1:
-        return -1
-    else:
-        return 0
+    return 1 if score > 0.1 else -1 if score < -0.1 else 0
 
 def compute_bert_sentiment_batch(texts):
     if not texts:
@@ -56,26 +46,11 @@ def compute_bert_sentiment_batch(texts):
         for r in results
     ]
 
-def load_csv_to_elasticsearch(input_file, index_name):
-    with open(input_file, newline='', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        actions = [
-            { "_index": index_name, "_source": row }
-            for row in reader
-        ]
-        helpers.bulk(es, actions)
-    print(f"CSV data loaded into Elasticsearch index '{index_name}' successfully.")
-
-
-def fetch_reviews_from_elasticsearch(index_name):
-    query = {"query": {"match_all": {}}},
-    result = es.search(index=index_name, body=query, size=10000)
-    return [hit['_source'] for hit in result['hits']['hits']]
-
 # Process Reviews with review_id generation
-def process_reviews(output_file, sentiment_method, sentiment_label):
+def process_reviews(input_file, output_file, sentiment_method, sentiment_label):
 
-    rows = fetch_reviews_from_elasticsearch("trustpilot_reviews")
+    with open(input_file, newline='', encoding='utf-8') as csvfile:
+        rows = list(csv.DictReader(csvfile))
 
     # Sort rows to ensure consistent order for identical review_id generation (case-insensitive sorting)
     rows = sorted(rows, key=lambda x: (x.get("Company", "").lower(), x.get("Review Comment", "").lower()))
@@ -197,7 +172,7 @@ def process_reviews(output_file, sentiment_method, sentiment_label):
         writer.writeheader()
         writer.writerows(rows)
 
-    print(f"Sentiment analysis completed using {sentiment_method.__name__}. Output saved to {output_file}")
+    print(f"✅ Sentiment analysis completed using {sentiment_method.__name__}. Output saved to {output_file}")
 
 # Consolidate Sentiment CSVs into One
 def merge_sentiment_csvs():
@@ -225,9 +200,9 @@ def merge_sentiment_csvs():
 
     # Retain "Review Length" and "Combined_Score" from one of the original files (VADER)
     merged_df["Review Length"] = vader_df["Review Length"]
-    merged_df["Combined_Score"] = vader_df["Combined_Score"]  # Added this line
+    merged_df["Combined_Score"] = vader_df["Combined_Score"]  # ✅ Added this line
 
-    # Reorder columns before saving
+    # ✅ Reorder columns before saving
     desired_column_order = [
         "Company", "Domain", "Number of Reviews", "Trustscore", "Combined_Score",
         "5 stars reviews percentage", "4 stars reviews percentage",
@@ -244,7 +219,7 @@ def merge_sentiment_csvs():
     # Save final merged file
     merged_df.to_csv("trustpilot_reviews_combined.csv", index=False)
 
-    print("Merged CSV created successfully: trustpilot_reviews_combined.csv")
+    print("✅ Merged CSV created successfully: trustpilot_reviews_combined.csv")
 
 # Elasticsearch Index Setup
 def setup_nested_index():
@@ -285,9 +260,9 @@ def setup_nested_index():
 
     if not es.indices.exists(index="trustpilot_reviews_combined_nested"):
         es.indices.create(index="trustpilot_reviews_combined_nested", body=mapping)
-        print("Nested  structure mapping created successfully.")
+        print("✅ Nested  structure mapping created successfully.")
     else:
-        print("ℹIndex already exists — skipped creation.")
+        print("ℹ️ Index already exists — skipped creation.")
 
 # import to elastic
 def import_to_elastic_nested(file_name):
@@ -367,9 +342,9 @@ def import_to_elastic_nested(file_name):
         if errors:
             with open("failed_docs_nested.json", "w", encoding="utf-8") as f:
                 json.dump(errors, f, indent=4)
-            print("Some records failed to import. Check failed_docs_nested.json for details.")
+            print("⚠️ Some records failed to import. Check failed_docs_nested.json for details.")
 
-    print("Nested data import completed successfully.")
+    print("✅ Nested data import completed successfully.")
 
 # Example usage
 # I added this condition to ensure that I have flexibility to run the whole .py code including
@@ -411,30 +386,28 @@ if __name__ == "__main__":
     review_counts = [data["Number of Reviews"] for data in company_data.values()]
     C = statistics.median(review_counts)
 
-    # print(f"Calculated C Value (Median of Reviews): {C}")  # Temporary debug output
+    # print(f"📌 Calculated C Value (Median of Reviews): {C}")  # Temporary debug output
 
-    # Initialize Elasticsearch connection
-    es = Elasticsearch(
-        "https://localhost:9200",
-        ca_certs="./ca/ca.crt",
-        basic_auth=("elastic", "datascientest")
-    )
-
-    # Check if Elasticsearch is reachable; if not exit program gracefully
-    if not es.ping():
-        print("Error: Cannot connect to Elasticsearch. Is the Docker container running?")
-        sys.exit(1)  # Stop execution immediately
-
-    print("Successfully connected to Elasticsearch!")
-
-    load_csv_to_elasticsearch(input_file, "trustpilot_reviews")
-
-    process_reviews("trustpilot_reviews_with_sentiment_vader.csv", compute_vader_sentiment, "VADER Sentiment Score")
-    process_reviews("trustpilot_reviews_with_sentiment_textblob.csv", compute_textblob_sentiment, "TextBlob Sentiment Score")
-    process_reviews("trustpilot_reviews_with_sentiment_bert.csv", compute_bert_sentiment_batch, "BERT Sentiment Score")
+    process_reviews("trustpilot_reviews.csv", "trustpilot_reviews_with_sentiment_vader.csv", compute_vader_sentiment, "VADER Sentiment Score")
+    process_reviews("trustpilot_reviews.csv", "trustpilot_reviews_with_sentiment_textblob.csv", compute_textblob_sentiment, "TextBlob Sentiment Score")
+    process_reviews("trustpilot_reviews.csv", "trustpilot_reviews_with_sentiment_bert.csv", compute_bert_sentiment_batch, "BERT Sentiment Score")
     
     merge_sentiment_csvs()
 
+# Initialize Elasticsearch connection
+es = Elasticsearch(
+    "https://localhost:9200",
+    ca_certs="./ca/ca.crt",
+    basic_auth=("elastic", "datascientest")
+)
+
+# Check if Elasticsearch is reachable; if not exit program gracefully
+
+if not es.ping():
+    print("❌ ERROR: Cannot connect to Elasticsearch. Is the Docker container running?")
+    sys.exit(1)  # Stop execution immediately
+
+print("✅ Successfully connected to Elasticsearch!")
 
 # Uncomment when ready to import
 # setup_nested_index()
