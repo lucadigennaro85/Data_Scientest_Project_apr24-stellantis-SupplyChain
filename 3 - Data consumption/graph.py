@@ -6,24 +6,30 @@ import plotly.express as px
 import plotly.graph_objects as go
 from elasticsearch import Elasticsearch
 
-es = Elasticsearch(
-    "https://63.33.209.17:9200",
-    verify_certs=False,
-    basic_auth=("elastic", "datascientest")
-)
 
-query = {
-    "query": {
-        "match_all": {}
-    },
-    "size": 10000
-}
+# FROM ELASTIC SEARCH
+# es = Elasticsearch(
+#     "https://18.203.98.227:9200",
+#     verify_certs=False,
+#     basic_auth=("elastic", "datascientest")
+# )
 
-response = es.search(index="trustpilot_reviews_combined_flat", body=query, scroll="2m")
-hits = response['hits']['hits']
-data = [hit['_source'] for hit in hits]
+# query = {
+#     "query": {
+#         "match_all": {}
+#     },
+#     "size": 10000
+# }
 
-df = pd.DataFrame(data)
+# response = es.search(index="trustpilot_reviews_combined_flat", body=query, scroll="2m")
+# hits = response['hits']['hits']
+# data = [hit['_source'] for hit in hits]
+
+# df = pd.DataFrame(data)
+# df_unique = df.drop_duplicates(subset='Company')
+
+# FROM A CSV FILE
+df = pd.read_csv('3 - Data consumption/trustpilot_reviews_combined.csv')
 df_unique = df.drop_duplicates(subset='Company')
 
 max_reviews = df_unique['Number of Reviews'].max()
@@ -82,10 +88,18 @@ def update_graphs(_):
     ])
     fig5.update_layout(barmode='stack', title='Stars distribution per Company', yaxis=dict(range=[0, max_stars]))
 
-    fig6 = px.bar(df_unique, x='Company', y=['VADER Sentiment Score', 'TextBlob Sentiment Score', 'BERT Sentiment Score'], title='Sentiment analysis scores per Company')    
+
+    fig6 = px.bar(df_unique, x='Company', y=['VADER Sentiment Score', 'TextBlob Sentiment Score', 'BERT Sentiment Score'], title='Sentiment analysis scores per Company', barmode='group')    
     fig6.update_layout(yaxis=dict(range=[-1, max(max_vader, max_textblob, max_bert)]))
+
+    
+    #df_melted = df_unique.melt(id_vars='Company', value_vars=['VADER Sentiment Score', 'TextBlob Sentiment Score', 'BERT Sentiment Score'], var_name='Sentiment Type', value_name='Score')
+    #fig6 = px.bar(df_melted, x='Company', y='Score', color='Sentiment Type', title='Sentiment analysis scores per Company', barmode='group')
+    #fig6.update_layout(yaxis=dict(range=[-1, 1]))
+
+
 
     return fig1, fig2, fig3, fig4, fig5, fig6
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=False, port=8050)
