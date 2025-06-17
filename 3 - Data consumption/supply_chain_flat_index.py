@@ -1,6 +1,6 @@
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from textblob import TextBlob
-from transformers import pipeline
+from transformers import pipeline  # for bert sentiment analysis
 import csv
 import json
 import hashlib
@@ -31,6 +31,8 @@ def compute_textblob_sentiment(text):
     return 1 if score > 0.1 else -1 if score < -0.1 else 0
 
 def compute_bert_sentiment_batch(texts):
+    # USED the cardiffnlp/twitter-roberta-base-sentiment BERT model which is optimized for Twitter (very strong in social NLP)
+    # It is 2nd heviest in in computinmg tresources usage and 2nd hiughest in accurracy - used mostly in NLP for social media
     if not texts:
         return []
 
@@ -159,6 +161,14 @@ def process_reviews(input_file, output_file, sentiment_method, sentiment_label):
             if trustscore == 0 and num_reviews == 0:
                 row["Combined_Score"] = 0.0
             else:
+                # Combined Score=(R×N)/(N+C) 
+                # This is a Bayesian-like shrinkage toward 0.
+                # If N is low (few reviews), the formula pulls the Combined Score down toward 0.
+                # If N is large (many reviews), the Combined Score is closer to the raw Trustscore (R).
+                # Where:
+                #       R is the Trustscore column (FLOAT) - the average rating (0-5).
+                #       N is the “Number of Reviews” (num_reviews) column (INTEGER)
+                #       C is a constant that controls how much weight is given to the number of reviews. It is calculated once in the __main__ section below 
                 row["Combined_Score"] = round(trustscore * num_reviews / (num_reviews + C), 5)
 
         except (ValueError, TypeError) as e:
@@ -201,7 +211,7 @@ def merge_sentiment_csvs():
     # Retain "Review Length" and "Combined_Score" from one of the original files (VADER)
     merged_df["Review Length"] = vader_df["Review Length"]
     merged_df["Combined_Score"] = vader_df["Combined_Score"]  # ✅ Added this line
-
+    
     # ✅ Reorder columns before saving
     desired_column_order = [
         "Company", "Domain", "Number of Reviews", "Trustscore", "Combined_Score",
@@ -221,8 +231,8 @@ def merge_sentiment_csvs():
 
     print("✅ Merged CSV created successfully: trustpilot_reviews_combined.csv")
 
-# Elasticsearch Index Setup
-def setup_nested_index():
+# Elasticsearch Flat Index Setup
+def setup_flat_index():
     mapping = {
         "mappings": {
             "properties": {
@@ -239,62 +249,56 @@ def setup_nested_index():
                 "Company VADER Sentiment Score": {"type": "float"},
                 "Company TextBlob Sentiment Score": {"type": "float"},
                 "Company BERT Sentiment Score": {"type": "float"},
-                "Reviews": {
-                    "type": "nested",
-                    "properties": {
-                        "review_id": {"type": "keyword"},
-                        "Review Stars": {"type": "integer"},
-                        "Review Comment": {"type": "text"},
-                        "Review Length": {"type": "integer"},
-                        "Company Response": {"type": "text"},
-                        "VADER Sentiment Score": {"type": "keyword"},
-                        "TextBlob Sentiment Score": {"type": "keyword"},
-                        "BERT Sentiment Score": {"type": "keyword"},
-#                       "Reviewer Username": {"type": "keyword"},
-#                       "Review date": {"type": "date"}
-                    }
-                }
+                "review_id": {"type": "keyword"},
+                "Review Stars": {"type": "integer"},
+                "Review Comment": {"type": "text"},
+                "Review Length": {"type": "integer"},
+                "Company Response": {"type": "text"},
+                "VADER Sentiment Score": {"type": "keyword"},
+                "TextBlob Sentiment Score": {"type": "keyword"},
+                "BERT Sentiment Score": {"type": "keyword"},
+#               "Reviewer Username": {"type": "keyword"},
+#               "Review date": {"type": "date"}
             }
         }
     }
 
-    if not es.indices.exists(index="trustpilot_reviews_combined_nested"):
-        es.indices.create(index="trustpilot_reviews_combined_nested", body=mapping)
-        print("✅ Nested  structure mapping created successfully.")
+    if not es.indices.exists(index="trustpilot_reviews_combined_flat"):
+        es.indices.create(index="trustpilot_reviews_combined_flat", body=mapping)
+        print("✅ Flat structure mapping created successfully.")
     else:
         print("ℹ️ Index already exists — skipped creation.")
 
+
 # import to elastic
-def import_to_elastic_nested(file_name):
+def import_to_elastic_flat(file_name):
     with open(file_name, encoding='utf-8') as f:
         reader = csv.DictReader(f)
 
-        # Dictionary to group reviews under companies
-        company_reviews = {}
-
-        # Function to clean and convert percentage values safely
-        def clean_percentage(value):
-            if value is None:
-                return None
-            value = value.strip('%')  # Remove % sign
-            if value == "<1":  
-                return 1.0  # Convert "<1%" to 1.0
-            try:
-                return float(value)
-            except ValueError:
-                return None  # Handle any unexpected errors
-
         def process_row(row):
-            # Convert empty strings to None
+            # Convert missing or empty fields to None (avoid indexing issues)
             for key in row:
                 if row[key] == "":
                     row[key] = None
 
-            # Extract company-level details
-            company_name = row["Company"]
-            if company_name not in company_reviews:
-                company_reviews[company_name] = {
-                    "Company": company_name,
+            # Function to clean and convert percentage values safely
+            def clean_percentage(value):
+                if value is None:
+                    return None
+                value = value.strip('%')  # Remove % sign
+                if value == "<1":  
+                    return 1.0  # Convert "<1%" to 1.0
+                try:
+                    return float(value)
+                except ValueError:
+                    return None  # Handle any unexpected errors
+
+            # Ensure proper data types and handle missing numeric values safely
+            return {
+                "_index": "trustpilot_reviews_combined_flat",
+                "_source": {
+                    "review_id": row["review_id"],
+                    "Company": row["Company"],
                     "Domain": row.get("Domain", None),
                     "Number of Reviews": int(row["Number of Reviews"]) if row["Number of Reviews"] and row["Number of Reviews"].isdigit() else None,
                     "Trustscore": float(row["Trustscore"]) if row["Trustscore"] else None,
@@ -307,44 +311,26 @@ def import_to_elastic_nested(file_name):
                     "Company VADER Sentiment Score": float(row["Company VADER Sentiment Score"]) if row["Company VADER Sentiment Score"] else None,
                     "Company TextBlob Sentiment Score": float(row["Company TextBlob Sentiment Score"]) if row["Company TextBlob Sentiment Score"] else None,
                     "Company BERT Sentiment Score": float(row["Company BERT Sentiment Score"]) if row["Company BERT Sentiment Score"] else None,
-                    "Reviews": []  # Placeholder for nested reviews
+                    "Review Stars": int(float(row["Review Stars"].strip())) if row.get("Review Stars") and row["Review Stars"].strip().replace(".", "", 1).isdigit() else None,
+                    "Review Comment": row["Review Comment"],
+                    "Company Response": row.get("Company Response", None),
+                    "VADER Sentiment Score": row["VADER Sentiment Score"],
+                    "TextBlob Sentiment Score": row["TextBlob Sentiment Score"],
+                    "BERT Sentiment Score": row["BERT Sentiment Score"],
+                    "Review Length": int(row["Review Length"]) if row["Review Length"] and row["Review Length"].isdigit() else None
                 }
-
-            # Extract review-level details
-            review_data = {
-                "review_id": row["review_id"],
-                "Review Stars": int(float(row["Review Stars"].strip())) if row.get("Review Stars") and row["Review Stars"].strip().replace(".", "", 1).isdigit() else None,
-                "Review Comment": row["Review Comment"],
-                "Company Response": row.get("Company Response", None),
-                "VADER Sentiment Score": row["VADER Sentiment Score"],
-                "TextBlob Sentiment Score": row["TextBlob Sentiment Score"],
-                "BERT Sentiment Score": row["BERT Sentiment Score"],
-                "Review Length": int(row["Review Length"]) if row["Review Length"] and row["Review Length"].isdigit() else None
             }
 
-            # Add review to the corresponding company
-            company_reviews[company_name]["Reviews"].append(review_data)
-
-        # Process rows
-        for row in reader:
-            process_row(row)
-
-        # Convert grouped data into bulk indexing format
-        actions = [
-            {"_index": "trustpilot_reviews_combined_nested", "_source": company_data}
-            for company_data in company_reviews.values()
-        ]
-
-        # Bulk insert into Elasticsearch
-        success, errors = helpers.bulk(es, actions, chunk_size=500, raise_on_error=False)
+        # Process rows and insert into Elasticsearch in bulk
+        success, errors = helpers.bulk(es, (process_row(row) for row in reader), chunk_size=500, raise_on_error=False)
 
         # Handle potential errors
         if errors:
-            with open("failed_docs_nested.json", "w", encoding="utf-8") as f:
+            with open("failed_docs_flat.json", "w", encoding="utf-8") as f:
                 json.dump(errors, f, indent=4)
-            print("⚠️ Some records failed to import. Check failed_docs_nested.json for details.")
+            print("⚠️ Some records failed to import. Check failed_docs_flat.json for details.")
 
-    print("✅ Nested data import completed successfully.")
+    print("✅ Flat data import completed successfully.")
 
 # Example usage
 # I added this condition to ensure that I have flexibility to run the whole .py code including
@@ -382,6 +368,14 @@ if __name__ == "__main__":
                     "Trustscore": trustscore
                 }
 
+    # The value of C should be chosen based on your dataset using either a median or mean calculation, C is used in above process_reviews method
+    # at step 6 where a Bayesian-like formnula with shrinkage towars 0 (trustscore * num_reviews / (num_reviews + C)) is used to calculate the combined_score.
+    # This is used to avoid a skewed trustscore for companies with smaller num_reviews by taking into account also the number of reviews 
+    # Recommendation for C Calculation:
+    #     Median is preferred over mean because the mean would be skewed by the outlier (1500 reviews).
+    #     The median provides a better central value for typical companies.
+    # Companies with a high number of reviews are mostly rated by their actual score.
+    # Companies with a low number of reviews are adjusted towards the average rating across all companies.
     # Extract just the review counts to calculate C
     review_counts = [data["Number of Reviews"] for data in company_data.values()]
     C = statistics.median(review_counts)
@@ -410,5 +404,5 @@ if not es.ping():
 print("✅ Successfully connected to Elasticsearch!")
 
 # Uncomment when ready to import
-# setup_nested_index()
-# import_to_elastic_nested("trustpilot_reviews_combined.csv")
+# setup_flat_index()
+# import_to_elastic_flat("trustpilot_reviews_combined.csv")
