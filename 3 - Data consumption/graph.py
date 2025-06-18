@@ -29,7 +29,7 @@ from elasticsearch import Elasticsearch
 # df_unique = df.drop_duplicates(subset='Company')
 
 # FROM A CSV FILE
-df = pd.read_csv('3 - Data consumption/trustpilot_reviews_combined.csv')
+df = pd.read_csv('trustpilot_reviews_combined.csv')
 df_unique = df.drop_duplicates(subset='Company')
 
 max_reviews = df_unique['Number of Reviews'].max()
