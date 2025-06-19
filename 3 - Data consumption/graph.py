@@ -8,29 +8,29 @@ from elasticsearch import Elasticsearch
 
 
 # FROM ELASTIC SEARCH
-# es = Elasticsearch(
-#     "https://18.203.98.227:9200",
-#     verify_certs=False,
-#     basic_auth=("elastic", "datascientest")
-# )
+es = Elasticsearch(
+    "https://3.249.231.163:9200",
+    verify_certs=False,
+    basic_auth=("elastic", "datascientest")
+)
 
-# query = {
-#     "query": {
-#         "match_all": {}
-#     },
-#     "size": 10000
-# }
+query = {
+    "query": {
+        "match_all": {}
+    },
+    "size": 10000
+}
 
-# response = es.search(index="trustpilot_reviews_combined_flat", body=query, scroll="2m")
-# hits = response['hits']['hits']
-# data = [hit['_source'] for hit in hits]
+response = es.search(index="trustpilot_reviews_combined_flat", body=query, scroll="2m")
+hits = response['hits']['hits']
+data = [hit['_source'] for hit in hits]
 
-# df = pd.DataFrame(data)
-# df_unique = df.drop_duplicates(subset='Company')
+df = pd.DataFrame(data)
+df_unique = df.drop_duplicates(subset='Company')
 
 # FROM A CSV FILE
-df = pd.read_csv('trustpilot_reviews_combined.csv')
-df_unique = df.drop_duplicates(subset='Company')
+# df = pd.read_csv('trustpilot_reviews_combined.csv')
+# df_unique = df.drop_duplicates(subset='Company')
 
 max_reviews = df_unique['Number of Reviews'].max()
 max_trustscore = df_unique['Trustscore'].max()

@@ -4,20 +4,47 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import subprocess
+from elasticsearch import Elasticsearch
 
 app = FastAPI()
 
-@app.on_event("startup")
-def start_dash():
-    subprocess.Popen(["python", "graph.py"])
+# If you want the plotly service to be on the 8050 port, uncomment:
+#@app.on_event("startup")
+#def start_dash():
+#    subprocess.Popen(["python", "graph.py"])
 
 def fig_to_html(fig):
     return fig.to_html(full_html=False, include_plotlyjs='cdn')
 
 def load_data():
-    df = pd.read_csv('trustpilot_reviews_combined.csv')
+    # FROM ELASTIC SEARCH
+    es = Elasticsearch(
+        "https://3.249.231.163:9200",
+        verify_certs=False,
+        basic_auth=("elastic", "datascientest")
+    )
+
+    query = {
+        "query": {
+            "match_all": {}
+        },
+        "size": 10000
+    }
+
+    response = es.search(index="trustpilot_reviews_combined_flat", body=query, scroll="2m")
+    hits = response['hits']['hits']
+    data = [hit['_source'] for hit in hits]
+
+    df = pd.DataFrame(data)
     df_unique = df.drop_duplicates(subset='Company')
+
+#    FROM CSV FILE
+    # df = pd.read_csv('trustpilot_reviews_combined.csv')
+    # df_unique = df.drop_duplicates(subset='Company')
+    
     return df_unique
+
+
 
 def generate_figures(df):
     max_vals = {
@@ -25,9 +52,9 @@ def generate_figures(df):
         'trustscore': df['Trustscore'].max(),
         'combined': df['Combined_Score'].max(),
         'stars': df[[col for col in df.columns if 'stars reviews percentage' in col]].sum(axis=1).max(),
-        'vader': df['VADER Sentiment Score'].max(),
-        'textblob': df['TextBlob Sentiment Score'].max(),
-        'bert': df['BERT Sentiment Score'].max()
+        'vader': df['Company VADER Sentiment Score'].max(),
+        'textblob': df['Company TextBlob Sentiment Score'].max(),
+        'bert': df['Company BERT Sentiment Score'].max()
     }
 
     fig1 = px.bar(df, x='Company', y='Number of Reviews', title='Number of reviews per Company')
@@ -49,10 +76,13 @@ def generate_figures(df):
     ])
     fig5.update_layout(barmode='stack', title='Stars distribution per Company', yaxis=dict(range=[0, max_vals['stars']]))
 
-    fig6 = px.bar(df, x='Company',
-                  y=['VADER Sentiment Score', 'TextBlob Sentiment Score', 'BERT Sentiment Score'],
-                  title='Sentiment analysis scores per Company', barmode='group')
-    fig6.update_layout(yaxis=dict(range=[-1, max(max_vals['vader'], max_vals['textblob'], max_vals['bert'])]))
+    fig6 = go.Figure(data=[
+        go.Bar(name='VADER', x=df['Company'], y=df['Company VADER Sentiment Score']),
+        go.Bar(name='TextBlob', x=df['Company'], y=df['Company TextBlob Sentiment Score']),
+        go.Bar(name='BERT', x=df['Company'], y=df['Company BERT Sentiment Score']),
+    ])
+
+    fig6.update_layout(title='Sentiment analysis', yaxis=dict(range=[-1, 1]))
 
     return [fig1, fig2, fig3, fig4, fig5, fig6]
 
