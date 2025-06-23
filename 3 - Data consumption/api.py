@@ -9,7 +9,7 @@ from elasticsearch import Elasticsearch
 
 app = FastAPI()
 
-# If you want the plotly service to be on the 8050 port, uncomment:
+# If you want the plotly interactive dashboard to be at the same time on the 8050 port, uncomment the following lines:
 #@app.on_event("startup")
 #def start_dash():
 #    subprocess.Popen(["python", "graph.py"])
