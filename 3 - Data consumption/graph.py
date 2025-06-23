@@ -1,3 +1,9 @@
+'''
+This file creates the plotly interactive dashboard only.
+For the API implementation, run the api.py script alone.
+'''
+
+import os
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
@@ -6,10 +12,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 from elasticsearch import Elasticsearch
 
+es_host = os.getenv("ES_HOST", "localhost")
 
 # FROM ELASTIC SEARCH
 es = Elasticsearch(
-    "https://3.249.231.163:9200",
+    es_host,
     verify_certs=False,
     basic_auth=("elastic", "datascientest")
 )

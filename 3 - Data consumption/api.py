@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 import pandas as pd
@@ -17,9 +18,12 @@ def fig_to_html(fig):
     return fig.to_html(full_html=False, include_plotlyjs='cdn')
 
 def load_data():
+
+    es_host = os.getenv("ES_HOST", "localhost")
+
     # FROM ELASTIC SEARCH
     es = Elasticsearch(
-        "https://3.249.231.163:9200",
+        es_host,
         verify_certs=False,
         basic_auth=("elastic", "datascientest")
     )
