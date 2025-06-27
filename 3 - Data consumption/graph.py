@@ -12,7 +12,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from elasticsearch import Elasticsearch
 
-es_host = os.getenv("ES_HOST", "http://54.155.236.42:5601")
+es_host = os.getenv("ES_HOST", "http://54.155.236.42:9200")
 
 # FROM ELASTIC SEARCH
 es = Elasticsearch(

@@ -23,7 +23,7 @@ def fig_to_html(fig):
 
 def load_data():
 
-    es_host = os.getenv("ES_HOST", "http://54.155.236.42:5601")
+    es_host = os.getenv("ES_HOST", "http://54.155.236.42:9200")
 
     # FROM ELASTIC SEARCH
     es = Elasticsearch(
