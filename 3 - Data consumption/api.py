@@ -7,6 +7,10 @@ import plotly.graph_objects as go
 import subprocess
 from elasticsearch import Elasticsearch
 
+# To run the script:
+# cd "3 - Data consumption"
+# uvicorn api:app --reload
+
 app = FastAPI()
 
 # If you want the plotly interactive dashboard to be at the same time on the 8050 port, uncomment the following lines:
@@ -19,7 +23,7 @@ def fig_to_html(fig):
 
 def load_data():
 
-    es_host = os.getenv("ES_HOST", "localhost")
+    es_host = os.getenv("ES_HOST", "http://54.155.236.42:5601")
 
     # FROM ELASTIC SEARCH
     es = Elasticsearch(
