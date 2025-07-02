@@ -29,7 +29,9 @@ def load_data():
     es = Elasticsearch(
         es_host,
         verify_certs=False,
-        basic_auth=("elastic", "datascientest")
+        basic_auth=("elastic", "datascientest"),
+        headers={"Accept": "application/vnd.elasticsearch+json; compatible-with=8",
+                "Content-Type": "application/vnd.elasticsearch+json; compatible-with=8"}
     )
 
     query = {
