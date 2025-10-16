@@ -10,6 +10,8 @@ from elasticsearch import Elasticsearch
 # To run the script:
 # cd "3 - Data consumption"
 # uvicorn api:app --reload
+# /company/{company_name}
+# /companies
 
 app = FastAPI()
 
@@ -23,7 +25,7 @@ def fig_to_html(fig):
 
 def load_data():
 
-    es_host = os.getenv("ES_HOST", "https://3.249.205.200:9200")
+    es_host = os.getenv("ES_HOST", "https://54.216.13.137:9200")
 
     # FROM ELASTIC SEARCH
     es = Elasticsearch(
