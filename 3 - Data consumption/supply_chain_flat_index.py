@@ -32,7 +32,7 @@ def compute_textblob_sentiment(text):
 
 def compute_bert_sentiment_batch(texts):
     # USED the cardiffnlp/twitter-roberta-base-sentiment BERT model which is optimized for Twitter (very strong in social NLP)
-    # It is 2nd heviest in in computinmg tresources usage and 2nd hiughest in accurracy - used mostly in NLP for social media
+    # It is 2nd heaviest in in computing resources usage and 2nd highest in accurracy - used mostly in NLP for social media
     if not texts:
         return []
 
